@@ -26,7 +26,7 @@ var (
 )
 
 func generate(ei *epubInfo) (err error) {
-	func() {
+	err = func() (err error) {
 		archiveFile, err := os.Create("output.zip")
 		if err != nil {
 			return
@@ -41,7 +41,12 @@ func generate(ei *epubInfo) (err error) {
 				return
 			}
 		}
+
+		return
 	}()
+	if err != nil {
+		return
+	}
 
 	if err = os.Rename("output.zip", "output.epub"); err != nil {
 		return
@@ -51,7 +56,10 @@ func generate(ei *epubInfo) (err error) {
 }
 
 func generateMimetype(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
-	w, err := archiveWriter.Create("mimetype")
+	w, err := archiveWriter.CreateHeader(&zip.FileHeader{
+		Name:   "mimetype",
+		Method: zip.Store,
+	})
 	if err != nil {
 		return
 	}
