@@ -11,11 +11,13 @@ const (
 )
 
 type epubInfo struct {
-	CoverImagePath string `json:"cover_image_path"`
-	ContentPath    string `json:"content_path"`
-	ISBN           string `json:"isbn"`
-	StylesPath     string `json:"styles_path"`
-	Title          string `json:"title"`
+	ISBN  string `json:"isbn"`
+	Title string `json:"title"`
+	Paths struct {
+		CoverImage string `json:"cover_image"`
+		Styles     string `json:"styles"`
+		Text       string `json:"text"`
+	} `json:"paths"`
 }
 
 func main() {

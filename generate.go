@@ -80,7 +80,7 @@ func generateContainer(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 }
 
 func generateStyles(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
-	b, err := os.ReadFile(ei.StylesPath)
+	b, err := os.ReadFile(ei.Paths.Styles)
 	if err != nil {
 		return
 	}
@@ -103,7 +103,7 @@ func generateStyles(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 }
 
 func generateText(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
-	b, err := os.ReadFile(ei.ContentPath)
+	b, err := os.ReadFile(ei.Paths.Text)
 	if err != nil {
 		panic(err)
 	}
