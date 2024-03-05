@@ -26,19 +26,25 @@ var (
 )
 
 func generate(ei *epubInfo) (err error) {
-	archiveFile, err := os.Create("epub.zip")
-	if err != nil {
-		return
-	}
-	defer archiveFile.Close()
-
-	archiveWriter := zip.NewWriter(archiveFile)
-	defer archiveWriter.Close()
-
-	for _, handler := range generateHandlerList {
-		if err = handler(ei, archiveWriter); err != nil {
+	func() {
+		archiveFile, err := os.Create("output.zip")
+		if err != nil {
 			return
 		}
+		defer archiveFile.Close()
+
+		archiveWriter := zip.NewWriter(archiveFile)
+		defer archiveWriter.Close()
+
+		for _, handler := range generateHandlerList {
+			if err = handler(ei, archiveWriter); err != nil {
+				return
+			}
+		}
+	}()
+
+	if err = os.Rename("output.zip", "output.epub"); err != nil {
+		return
 	}
 
 	return
