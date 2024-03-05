@@ -1,7 +1,7 @@
-*.css
-*.epub
-*.json
-*.md
-*.zip
+*
 
+!.gitignore
+!*.go
+!go.mod
+!go.sum
 !README.md
