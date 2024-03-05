@@ -175,6 +175,11 @@ func generateOCF(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 	builder.WriteString(`<metadata xmlns:opf="http://www.idpf.org/2007/opf" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:calibre="http://calibre.kovidgoyal.net/2009/metadata">`)
 	builder.WriteString(`<dc:language>en</dc:language>`)
 	builder.WriteString(`<dc:title>` + ei.Title + `</dc:title>`)
+
+	if ei.Author != "" {
+		builder.WriteString(`<dc:creator>` + ei.Author + `</dc:creator>`)
+	}
+
 	builder.WriteString(`<dc:identifier id="unique-id">` + ei.ISBN + `</dc:identifier>`)
 	builder.WriteString(`</metadata>`)
 	builder.WriteString(`<manifest>`)
