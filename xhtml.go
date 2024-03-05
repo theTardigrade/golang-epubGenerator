@@ -2,7 +2,7 @@ package main
 
 import "strings"
 
-func xhtmlHeader(title string) string {
+func xhtmlHeader(title, headContent string) string {
 	var builder strings.Builder
 
 	builder.WriteString(`<?xml version="1.0" encoding="utf-8"?>`)
@@ -10,6 +10,11 @@ func xhtmlHeader(title string) string {
 	builder.WriteString(`<head>`)
 	builder.WriteString(`<title>` + title + `</title>`)
 	builder.WriteString(`<link rel="stylesheet" href="styles.css" />`)
+
+	if headContent != "" {
+		builder.WriteString(headContent)
+	}
+
 	builder.WriteString(`</head>`)
 	builder.WriteString(`<body>`)
 

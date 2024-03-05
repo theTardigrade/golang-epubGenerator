@@ -152,20 +152,21 @@ func generateCoverPage(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 		return
 	}
 
-	var builder bytes.Buffer
+	var headerBuilder, bodyBuilder bytes.Buffer
 
-	builder.WriteString(`<style type="text/css">@page{padding:0pt;margin:0pt}body{text-align:center;padding:0pt;margin:0pt;}</style>`)
-	builder.WriteString(`<div>`)
-	builder.WriteString(`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="100%" height="100%" viewBox="0 0 1200 1600" preserveAspectRatio="none">`)
-	builder.WriteString(`<image width="1200" height="1600" xlink:href="cover.png" />`)
-	builder.WriteString(`</svg>`)
-	builder.WriteString(`</div>`)
+	headerBuilder.WriteString(`<style type="text/css">@page{padding:0pt;margin:0pt}body{text-align:center;padding:0pt;margin:0pt;}</style>`)
 
-	if _, err = io.WriteString(w, xhtmlHeader("Cover")); err != nil {
+	bodyBuilder.WriteString(`<div>`)
+	bodyBuilder.WriteString(`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="100%" height="100%" viewBox="0 0 1200 1600" preserveAspectRatio="none">`)
+	bodyBuilder.WriteString(`<image width="1200" height="1600" xlink:href="cover.png" />`)
+	bodyBuilder.WriteString(`</svg>`)
+	bodyBuilder.WriteString(`</div>`)
+
+	if _, err = io.WriteString(w, xhtmlHeader("Cover", headerBuilder.String())); err != nil {
 		return
 	}
 
-	if _, err = w.Write(builder.Bytes()); err != nil {
+	if _, err = w.Write(bodyBuilder.Bytes()); err != nil {
 		return
 	}
 
@@ -201,7 +202,7 @@ func generateTextPage(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 		return
 	}
 
-	if _, err = io.WriteString(w, xhtmlHeader(ei.Title)); err != nil {
+	if _, err = io.WriteString(w, xhtmlHeader(ei.Title, "")); err != nil {
 		return
 	}
 
@@ -294,7 +295,6 @@ func generateNCX(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 
 	if ei.coverImage != nil {
 		playOrder++
-
 		contentBuilder.WriteString(`<navPoint id="cover_page" playOrder="` + strconv.Itoa(playOrder) + `">`)
 		contentBuilder.WriteString(`<navLabel>`)
 		contentBuilder.WriteString(`<text>Cover</text>`)
