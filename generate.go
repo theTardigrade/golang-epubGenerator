@@ -2,6 +2,7 @@ package main
 
 import (
 	"archive/zip"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -86,23 +87,33 @@ func generateContainer(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 }
 
 func generateStyles(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
-	b, err := os.ReadFile(ei.Paths.Styles)
-	if err != nil {
-		return
-	}
-
-	b, err = minifier.Bytes("text/css", b)
-	if err != nil {
-		return
-	}
-
 	w, err := archiveWriter.Create("styles.css")
 	if err != nil {
 		return
 	}
 
-	if _, err = w.Write(b); err != nil {
-		return
+	if _, err = os.Stat(ei.Paths.Styles); err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			err = nil
+		} else {
+			return
+		}
+	} else {
+		var b []byte
+
+		b, err = os.ReadFile(ei.Paths.Styles)
+		if err != nil {
+			return
+		}
+
+		b, err = minifier.Bytes("text/css", b)
+		if err != nil {
+			return
+		}
+
+		if _, err = w.Write(b); err != nil {
+			return
+		}
 	}
 
 	return
