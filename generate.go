@@ -2,7 +2,6 @@ package main
 
 import (
 	"archive/zip"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -92,13 +91,7 @@ func generateStyles(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 		return
 	}
 
-	if _, err = os.Stat(ei.Paths.Styles); err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			err = nil
-		} else {
-			return
-		}
-	} else {
+	if ei.Paths.Styles != "" {
 		var b []byte
 
 		b, err = os.ReadFile(ei.Paths.Styles)
