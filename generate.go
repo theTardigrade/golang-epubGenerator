@@ -2,9 +2,11 @@ package main
 
 import (
 	"archive/zip"
-	"fmt"
+	"bytes"
+	"image/png"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/gomarkdown/markdown"
@@ -19,7 +21,9 @@ var (
 		generateMimetype,
 		generateContainer,
 		generateStyles,
-		generateText,
+		generateCoverImage,
+		generateCoverPage,
+		generateTextPage,
 		generateOCF,
 		generateNCX,
 	}
@@ -120,7 +124,59 @@ func generateStyles(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 	return
 }
 
-func generateText(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
+func generateCoverImage(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
+	if ei.coverImage == nil {
+		return
+	}
+
+	w, err := archiveWriter.Create("cover.png")
+	if err != nil {
+		return
+	}
+
+	err = png.Encode(w, ei.coverImage)
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+func generateCoverPage(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
+	if ei.coverImage == nil {
+		return
+	}
+
+	w, err := archiveWriter.Create("cover.xhtml")
+	if err != nil {
+		return
+	}
+
+	var builder bytes.Buffer
+
+	builder.WriteString(`<style type="text/css">@page{padding:0pt;margin:0pt}body{text-align:center;padding:0pt;margin:0pt;}</style>`)
+	builder.WriteString(`<div>`)
+	builder.WriteString(`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="100%" height="100%" viewBox="0 0 1200 1600" preserveAspectRatio="none">`)
+	builder.WriteString(`<image width="1200" height="1600" xlink:href="cover.png" />`)
+	builder.WriteString(`</svg>`)
+	builder.WriteString(`</div>`)
+
+	if _, err = io.WriteString(w, xhtmlHeader("Cover")); err != nil {
+		return
+	}
+
+	if _, err = w.Write(builder.Bytes()); err != nil {
+		return
+	}
+
+	if _, err = io.WriteString(w, xhtmlFooter()); err != nil {
+		return
+	}
+
+	return
+}
+
+func generateTextPage(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 	b, err := os.ReadFile(ei.Paths.Text)
 	if err != nil {
 		panic(err)
@@ -145,7 +201,7 @@ func generateText(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 		return
 	}
 
-	if _, err = io.WriteString(w, xhtmlHeader(ei)); err != nil {
+	if _, err = io.WriteString(w, xhtmlHeader(ei.Title)); err != nil {
 		return
 	}
 
@@ -156,8 +212,6 @@ func generateText(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 	if _, err = io.WriteString(w, xhtmlFooter()); err != nil {
 		return
 	}
-
-	fmt.Println(string(b))
 
 	return
 }
@@ -184,14 +238,30 @@ func generateOCF(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 	builder.WriteString(`</metadata>`)
 	builder.WriteString(`<manifest>`)
 	builder.WriteString(`<item id="styles" href="styles.css" media-type="text/css" />`)
-	builder.WriteString(`<item id="text" href="text.xhtml" media-type="application/xhtml+xml" />`)
+
+	if ei.coverImage != nil {
+		builder.WriteString(`<item id="cover_page" href="cover.xhtml" media-type="application/xhtml+xml" />`)
+		builder.WriteString(`<item id="cover_image" href="cover.png" media-type="image/png" />`)
+	}
+
+	builder.WriteString(`<item id="text_page" href="text.xhtml" media-type="application/xhtml+xml" />`)
 	builder.WriteString(`<item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml" />`)
 	builder.WriteString(`</manifest>`)
 	builder.WriteString(`<spine toc="ncx">`)
-	builder.WriteString(`<itemref idref="text" />`)
+
+	if ei.coverImage != nil {
+		builder.WriteString(`<itemref idref="cover_page" />`)
+	}
+
+	builder.WriteString(`<itemref idref="text_page" />`)
 	builder.WriteString(`</spine>`)
-	// builder.WriteString(`<guide>`)
-	// builder.WriteString(`</guide>`)
+
+	if ei.coverImage != nil {
+		builder.WriteString(`<guide>`)
+		builder.WriteString(`<reference type="cover_page" href="cover.xhtml" title="Cover" />`)
+		builder.WriteString(`</guide>`)
+	}
+
 	builder.WriteString(`</package>`)
 
 	if _, err = io.WriteString(w, builder.String()); err != nil {
@@ -208,6 +278,7 @@ func generateNCX(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 	}
 
 	var contentBuilder strings.Builder
+	var playOrder int
 
 	contentBuilder.WriteString(`<?xml version="1.0" encoding="utf-8"?>`)
 	contentBuilder.WriteString(`<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1" xml:lang="eng">`)
@@ -220,12 +291,26 @@ func generateNCX(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 	contentBuilder.WriteString(`<text>` + ei.Title + "</text>")
 	contentBuilder.WriteString(`</docTitle>`)
 	contentBuilder.WriteString(`<navMap>`)
-	contentBuilder.WriteString(`<navPoint id="text" playOrder="1">`)
+
+	if ei.coverImage != nil {
+		playOrder++
+
+		contentBuilder.WriteString(`<navPoint id="cover_page" playOrder="` + strconv.Itoa(playOrder) + `">`)
+		contentBuilder.WriteString(`<navLabel>`)
+		contentBuilder.WriteString(`<text>Cover</text>`)
+		contentBuilder.WriteString(`</navLabel>`)
+		contentBuilder.WriteString(`<content src="cover.xhtml" />`)
+		contentBuilder.WriteString(`</navPoint>`)
+	}
+
+	playOrder++
+	contentBuilder.WriteString(`<navPoint id="text_page" playOrder="` + strconv.Itoa(playOrder) + `">`)
 	contentBuilder.WriteString(`<navLabel>`)
 	contentBuilder.WriteString(`<text>Text</text>`)
 	contentBuilder.WriteString(`</navLabel>`)
 	contentBuilder.WriteString(`<content src="text.xhtml" />`)
 	contentBuilder.WriteString(`</navPoint>`)
+
 	contentBuilder.WriteString(`</navMap>`)
 	contentBuilder.WriteString(`</ncx>`)
 
