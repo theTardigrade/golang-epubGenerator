@@ -1,0 +1,7 @@
+*.css
+*.epub
+*.json
+*.md
+*.zip
+
+!README.md
