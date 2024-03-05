@@ -153,12 +153,18 @@ func generateCoverPage(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 	}
 
 	var headerBuilder, bodyBuilder bytes.Buffer
+	coverImageBounds := ei.coverImage.Bounds()
+	coverImageWidthString := strconv.Itoa(coverImageBounds.Dx())
+	coverImageHeightString := strconv.Itoa(coverImageBounds.Dy())
 
-	headerBuilder.WriteString(`<style type="text/css">@page{padding:0pt;margin:0pt}body{text-align:center;padding:0pt;margin:0pt;}</style>`)
+	headerBuilder.WriteString(`<style type="text/css">`)
+	headerBuilder.WriteString(`@page{padding:0pt;margin:0pt}`)
+	headerBuilder.WriteString(`body{text-align:center;padding:0pt;margin:0pt;}`)
+	headerBuilder.WriteString(`</style>`)
 
 	bodyBuilder.WriteString(`<div>`)
-	bodyBuilder.WriteString(`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="100%" height="100%" viewBox="0 0 1200 1600" preserveAspectRatio="none">`)
-	bodyBuilder.WriteString(`<image width="1200" height="1600" xlink:href="cover.png" />`)
+	bodyBuilder.WriteString(`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="100%" height="100%" viewBox="0 0 ` + coverImageWidthString + ` ` + coverImageHeightString + `" preserveAspectRatio="none">`)
+	bodyBuilder.WriteString(`<image width="` + coverImageWidthString + `" height="` + coverImageHeightString + `" xlink:href="cover.png" />`)
 	bodyBuilder.WriteString(`</svg>`)
 	bodyBuilder.WriteString(`</div>`)
 
