@@ -11,8 +11,6 @@ var (
 )
 
 func init() {
-	minifier = minify.New()
-
 	minifier.AddFunc("text/css", css.Minify)
 	minifier.AddFunc("text/xml", xml.Minify)
 }
