@@ -1,8 +1,15 @@
 package main
 
 import (
+	"bytes"
 	"image"
 	"os"
+	"strconv"
+
+	"github.com/PuerkitoBio/goquery"
+	"github.com/gomarkdown/markdown"
+	"github.com/gomarkdown/markdown/html"
+	"github.com/gomarkdown/markdown/parser"
 )
 
 const (
@@ -23,6 +30,8 @@ type epubInfo struct {
 
 	coverImage       image.Image
 	coverImageFormat string
+	text             []byte
+	textHeadings     []string
 }
 
 type epubInfoInitHandler = func(*epubInfo) error
@@ -30,13 +39,19 @@ type epubInfoInitHandler = func(*epubInfo) error
 var (
 	epubInfoInitHandlerList = []epubInfoInitHandler{
 		epubInfoInitCoverImage,
+		epubInfoInitText,
+		epubInfoInitTextHeadings,
 	}
 )
 
-func epubInfoInit(ei *epubInfo) {
+func epubInfoInit(ei *epubInfo) (err error) {
 	for _, handler := range epubInfoInitHandlerList {
-		handler(ei)
+		if err = handler(ei); err != nil {
+			return
+		}
 	}
+
+	return
 }
 
 func epubInfoInitCoverImage(ei *epubInfo) (err error) {
@@ -57,6 +72,55 @@ func epubInfoInitCoverImage(ei *epubInfo) (err error) {
 
 	ei.coverImage = image
 	ei.coverImageFormat = imageFormat
+
+	return
+}
+
+func epubInfoInitText(ei *epubInfo) (err error) {
+	b, err := os.ReadFile(ei.Paths.Text)
+	if err != nil {
+		panic(err)
+	}
+
+	p := parser.New()
+
+	document := p.Parse(b)
+	renderer := html.NewRenderer(html.RendererOptions{
+		Flags: html.CommonFlags,
+	})
+
+	b = markdown.Render(document, renderer)
+
+	b, err = minifier.Bytes("text/xml", b)
+	if err != nil {
+		return
+	}
+
+	ei.text = b
+
+	return
+}
+
+func epubInfoInitTextHeadings(ei *epubInfo) (err error) {
+	r := bytes.NewReader(ei.text)
+
+	doc, err := goquery.NewDocumentFromReader(r)
+	if err != nil {
+		return
+	}
+
+	doc.Find("h1").Each(func(i int, s *goquery.Selection) {
+		ei.textHeadings = append(ei.textHeadings, s.Text())
+
+		s.SetAttr("id", "epub_generator_text_heading_"+strconv.Itoa(len(ei.textHeadings)))
+	})
+
+	docString, err := doc.Find("body").Html()
+	if err != nil {
+		return
+	}
+
+	ei.text = []byte(docString)
 
 	return
 }

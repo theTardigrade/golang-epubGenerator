@@ -14,14 +14,15 @@ func main() {
 
 	var ei epubInfo
 
-	err = json.Unmarshal(fileContent, &ei)
-	if err != nil {
+	if err = json.Unmarshal(fileContent, &ei); err != nil {
 		panic(err)
 	}
 
-	epubInfoInit(&ei)
+	if err = epubInfoInit(&ei); err != nil {
+		panic(err)
+	}
 
-	if err := generate(&ei); err != nil {
+	if err = generate(&ei); err != nil {
 		panic(err)
 	}
 }

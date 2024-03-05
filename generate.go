@@ -8,10 +8,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
-
-	"github.com/gomarkdown/markdown"
-	"github.com/gomarkdown/markdown/html"
-	"github.com/gomarkdown/markdown/parser"
+	"time"
 )
 
 type generateHandler func(*epubInfo, *zip.Writer) error
@@ -160,8 +157,8 @@ func generateCoverPage(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 	coverImageHeightString := strconv.Itoa(coverImageBounds.Dy())
 
 	headerBuilder.WriteString(`<style type="text/css">`)
-	headerBuilder.WriteString(`@page{padding:0pt;margin:0pt}`)
-	headerBuilder.WriteString(`body{text-align:center;padding:0pt;margin:0pt;}`)
+	headerBuilder.WriteString(`@page{padding:0pt !important;margin:0pt !important;}`)
+	headerBuilder.WriteString(`body{text-align:center !important;padding:0pt !important;margin:0pt !important;}`)
 	headerBuilder.WriteString(`</style>`)
 
 	bodyBuilder.WriteString(`<div>`)
@@ -231,6 +228,13 @@ func generateCopyrightPage(ei *epubInfo, archiveWriter *zip.Writer) (err error) 
 
 	builder.WriteString(`<div class="copyright_area">`)
 	builder.WriteString(`<p class="copyright_disclaimer">While every precaution has been taken in the preparation of this book, the publisher assumes no responsibility for errors or omissions, or for damages resulting from the use of the information contained herein.</p>`)
+	builder.WriteString(`<p class="copright_notice">Copyright © ` + strconv.Itoa(time.Now().UTC().Year()))
+
+	if ei.Author != "" {
+		builder.WriteString(" " + ei.Author)
+	}
+
+	builder.WriteString(`.</p>`)
 	builder.WriteString(`</div>`)
 
 	if _, err = io.WriteString(w, xhtmlHeader("Copyright", "")); err != nil {
@@ -249,25 +253,6 @@ func generateCopyrightPage(ei *epubInfo, archiveWriter *zip.Writer) (err error) 
 }
 
 func generateTextPage(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
-	b, err := os.ReadFile(ei.Paths.Text)
-	if err != nil {
-		panic(err)
-	}
-
-	p := parser.New()
-
-	document := p.Parse(b)
-	renderer := html.NewRenderer(html.RendererOptions{
-		Flags: html.CommonFlags,
-	})
-
-	b = markdown.Render(document, renderer)
-
-	b, err = minifier.Bytes("text/xml", b)
-	if err != nil {
-		return
-	}
-
 	w, err := archiveWriter.Create("text.xhtml")
 	if err != nil {
 		return
@@ -277,7 +262,7 @@ func generateTextPage(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 		return
 	}
 
-	if _, err = w.Write(b); err != nil {
+	if _, err = w.Write(ei.text); err != nil {
 		return
 	}
 
@@ -404,13 +389,27 @@ func generateNCX(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 		contentBuilder.WriteString(`</navPoint>`)
 	}
 
-	playOrder++
-	contentBuilder.WriteString(`<navPoint id="text_page" playOrder="` + strconv.Itoa(playOrder) + `">`)
-	contentBuilder.WriteString(`<navLabel>`)
-	contentBuilder.WriteString(`<text>Text</text>`)
-	contentBuilder.WriteString(`</navLabel>`)
-	contentBuilder.WriteString(`<content src="text.xhtml" />`)
-	contentBuilder.WriteString(`</navPoint>`)
+	if len(ei.textHeadings) > 0 {
+		for i, heading := range ei.textHeadings {
+			id := "epub_generator_text_heading_" + strconv.Itoa(i+1)
+
+			playOrder++
+			contentBuilder.WriteString(`<navPoint id="text_page_` + id + `" playOrder="` + strconv.Itoa(playOrder) + `">`)
+			contentBuilder.WriteString(`<navLabel>`)
+			contentBuilder.WriteString(`<text>` + heading + `</text>`)
+			contentBuilder.WriteString(`</navLabel>`)
+			contentBuilder.WriteString(`<content src="text.xhtml#` + id + `" />`)
+			contentBuilder.WriteString(`</navPoint>`)
+		}
+	} else {
+		playOrder++
+		contentBuilder.WriteString(`<navPoint id="text_page" playOrder="` + strconv.Itoa(playOrder) + `">`)
+		contentBuilder.WriteString(`<navLabel>`)
+		contentBuilder.WriteString(`<text>Text</text>`)
+		contentBuilder.WriteString(`</navLabel>`)
+		contentBuilder.WriteString(`<content src="text.xhtml" />`)
+		contentBuilder.WriteString(`</navPoint>`)
+	}
 
 	contentBuilder.WriteString(`</navMap>`)
 	contentBuilder.WriteString(`</ncx>`)
