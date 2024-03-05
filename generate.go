@@ -23,6 +23,7 @@ var (
 		generateStyles,
 		generateCoverImage,
 		generateCoverPage,
+		generateTitlePage,
 		generateTextPage,
 		generateOCF,
 		generateNCX,
@@ -183,6 +184,38 @@ func generateCoverPage(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 	return
 }
 
+func generateTitlePage(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
+	w, err := archiveWriter.Create("title.xhtml")
+	if err != nil {
+		return
+	}
+
+	var builder bytes.Buffer
+
+	builder.WriteString(`<div class="title_area">`)
+	builder.WriteString(`<h1 class="title">` + ei.Title + "</h1>")
+
+	if ei.Author != "" {
+		builder.WriteString(`<h2 class="author">` + ei.Author + "</h1>")
+	}
+
+	builder.WriteString(`</div>`)
+
+	if _, err = io.WriteString(w, xhtmlHeader("Title", "")); err != nil {
+		return
+	}
+
+	if _, err = w.Write(builder.Bytes()); err != nil {
+		return
+	}
+
+	if _, err = io.WriteString(w, xhtmlFooter()); err != nil {
+		return
+	}
+
+	return
+}
+
 func generateTextPage(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 	b, err := os.ReadFile(ei.Paths.Text)
 	if err != nil {
@@ -208,7 +241,7 @@ func generateTextPage(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 		return
 	}
 
-	if _, err = io.WriteString(w, xhtmlHeader(ei.Title, "")); err != nil {
+	if _, err = io.WriteString(w, xhtmlHeader("Text", "")); err != nil {
 		return
 	}
 
@@ -247,10 +280,11 @@ func generateOCF(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 	builder.WriteString(`<item id="styles" href="styles.css" media-type="text/css" />`)
 
 	if ei.coverImage != nil {
-		builder.WriteString(`<item id="cover_page" href="cover.xhtml" media-type="application/xhtml+xml" />`)
 		builder.WriteString(`<item id="cover_image" href="cover.png" media-type="image/png" />`)
+		builder.WriteString(`<item id="cover_page" href="cover.xhtml" media-type="application/xhtml+xml" />`)
 	}
 
+	builder.WriteString(`<item id="title_page" href="title.xhtml" media-type="application/xhtml+xml" />`)
 	builder.WriteString(`<item id="text_page" href="text.xhtml" media-type="application/xhtml+xml" />`)
 	builder.WriteString(`<item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml" />`)
 	builder.WriteString(`</manifest>`)
@@ -260,6 +294,7 @@ func generateOCF(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 		builder.WriteString(`<itemref idref="cover_page" />`)
 	}
 
+	builder.WriteString(`<itemref idref="title_page" />`)
 	builder.WriteString(`<itemref idref="text_page" />`)
 	builder.WriteString(`</spine>`)
 
@@ -308,6 +343,14 @@ func generateNCX(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 		contentBuilder.WriteString(`<content src="cover.xhtml" />`)
 		contentBuilder.WriteString(`</navPoint>`)
 	}
+
+	playOrder++
+	contentBuilder.WriteString(`<navPoint id="title_page" playOrder="` + strconv.Itoa(playOrder) + `">`)
+	contentBuilder.WriteString(`<navLabel>`)
+	contentBuilder.WriteString(`<text>Title</text>`)
+	contentBuilder.WriteString(`</navLabel>`)
+	contentBuilder.WriteString(`<content src="title.xhtml" />`)
+	contentBuilder.WriteString(`</navPoint>`)
 
 	playOrder++
 	contentBuilder.WriteString(`<navPoint id="text_page" playOrder="` + strconv.Itoa(playOrder) + `">`)
