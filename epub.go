@@ -11,10 +11,11 @@ const (
 )
 
 type epubInfo struct {
-	ISBN   string `json:"isbn"`
-	Title  string `json:"title"`
-	Author string `json:"author"`
-	Paths  struct {
+	ISBN                 string `json:"isbn"`
+	Title                string `json:"title"`
+	Author               string `json:"author"`
+	IncludeCopyrightPage bool   `json:"include_copyright_page"`
+	Paths                struct {
 		CoverImage string `json:"cover_image"`
 		Styles     string `json:"styles"`
 		Text       string `json:"text"`

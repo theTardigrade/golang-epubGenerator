@@ -24,6 +24,7 @@ var (
 		generateCoverImage,
 		generateCoverPage,
 		generateTitlePage,
+		generateCopyrightPage,
 		generateTextPage,
 		generateOCF,
 		generateNCX,
@@ -216,6 +217,37 @@ func generateTitlePage(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 	return
 }
 
+func generateCopyrightPage(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
+	if !ei.IncludeCopyrightPage {
+		return
+	}
+
+	w, err := archiveWriter.Create("copyright.xhtml")
+	if err != nil {
+		return
+	}
+
+	var builder bytes.Buffer
+
+	builder.WriteString(`<div class="copyright_area">`)
+	builder.WriteString(`<p class="copyright_disclaimer">While every precaution has been taken in the preparation of this book, the publisher assumes no responsibility for errors or omissions, or for damages resulting from the use of the information contained herein.</p>`)
+	builder.WriteString(`</div>`)
+
+	if _, err = io.WriteString(w, xhtmlHeader("Copyright", "")); err != nil {
+		return
+	}
+
+	if _, err = w.Write(builder.Bytes()); err != nil {
+		return
+	}
+
+	if _, err = io.WriteString(w, xhtmlFooter()); err != nil {
+		return
+	}
+
+	return
+}
+
 func generateTextPage(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 	b, err := os.ReadFile(ei.Paths.Text)
 	if err != nil {
@@ -285,6 +317,11 @@ func generateOCF(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 	}
 
 	builder.WriteString(`<item id="title_page" href="title.xhtml" media-type="application/xhtml+xml" />`)
+
+	if ei.IncludeCopyrightPage {
+		builder.WriteString(`<item id="copyright_page" href="copyright.xhtml" media-type="application/xhtml+xml" />`)
+	}
+
 	builder.WriteString(`<item id="text_page" href="text.xhtml" media-type="application/xhtml+xml" />`)
 	builder.WriteString(`<item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml" />`)
 	builder.WriteString(`</manifest>`)
@@ -295,6 +332,11 @@ func generateOCF(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 	}
 
 	builder.WriteString(`<itemref idref="title_page" />`)
+
+	if ei.IncludeCopyrightPage {
+		builder.WriteString(`<itemref idref="copyright_page" />`)
+	}
+
 	builder.WriteString(`<itemref idref="text_page" />`)
 	builder.WriteString(`</spine>`)
 
@@ -351,6 +393,16 @@ func generateNCX(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 	contentBuilder.WriteString(`</navLabel>`)
 	contentBuilder.WriteString(`<content src="title.xhtml" />`)
 	contentBuilder.WriteString(`</navPoint>`)
+
+	if ei.IncludeCopyrightPage {
+		playOrder++
+		contentBuilder.WriteString(`<navPoint id="copyright_page" playOrder="` + strconv.Itoa(playOrder) + `">`)
+		contentBuilder.WriteString(`<navLabel>`)
+		contentBuilder.WriteString(`<text>Copyright</text>`)
+		contentBuilder.WriteString(`</navLabel>`)
+		contentBuilder.WriteString(`<content src="copyright.xhtml" />`)
+		contentBuilder.WriteString(`</navPoint>`)
+	}
 
 	playOrder++
 	contentBuilder.WriteString(`<navPoint id="text_page" playOrder="` + strconv.Itoa(playOrder) + `">`)
