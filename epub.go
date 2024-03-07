@@ -10,6 +10,8 @@ import (
 	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/html"
 	"github.com/gomarkdown/markdown/parser"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 const (
@@ -18,13 +20,14 @@ const (
 )
 
 type epubInfo struct {
-	ISBN                 string `json:"isbn"`
-	Title                string `json:"title"`
-	Author               string `json:"author"`
-	EditionNumber        int    `json:"edition_number"`
-	IncludeContentsPage  bool   `json:"include_contents_page"`
-	IncludeCopyrightPage bool   `json:"include_copyright_page"`
-	Paths                struct {
+	ISBN                         string `json:"isbn"`
+	Title                        string `json:"title"`
+	Author                       string `json:"author"`
+	EditionNumber                int    `json:"edition_number"`
+	IncludeContentsPage          bool   `json:"include_contents_page"`
+	IncludeCopyrightPage         bool   `json:"include_copyright_page"`
+	ShouldCapitalizeMainHeadings bool   `json:"should_capitalize_main_headings"`
+	Paths                        struct {
 		CoverImage string `json:"cover_image"`
 		Styles     string `json:"styles"`
 		Text       string `json:"text"`
@@ -111,16 +114,26 @@ func epubInfoInitTextHeadings(ei *epubInfo) (err error) {
 		return
 	}
 
-	// caser := cases.Title(language.English)
+	var caser cases.Caser
+
+	if ei.ShouldCapitalizeMainHeadings {
+		caser = cases.Title(language.English)
+	}
 
 	doc.Find("h1").Each(func(i int, s *goquery.Selection) {
-		// heading := caser.String(s.Text())
 		heading := s.Text()
+
+		if ei.ShouldCapitalizeMainHeadings {
+			heading = caser.String(heading)
+		}
 
 		ei.textHeadings = append(ei.textHeadings, heading)
 
 		s.SetAttr("id", "epub_generator_text_heading_"+strconv.Itoa(len(ei.textHeadings)))
-		// s.SetText(heading)
+
+		if ei.ShouldCapitalizeMainHeadings {
+			s.SetText(heading)
+		}
 	})
 
 	docString, err := doc.Find("body").Html()
