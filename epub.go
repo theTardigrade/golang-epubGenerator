@@ -21,6 +21,8 @@ type epubInfo struct {
 	ISBN                 string `json:"isbn"`
 	Title                string `json:"title"`
 	Author               string `json:"author"`
+	EditionNumber        int    `json:"edition_number"`
+	IncludeContentsPage  bool   `json:"include_contents_page"`
 	IncludeCopyrightPage bool   `json:"include_copyright_page"`
 	Paths                struct {
 		CoverImage string `json:"cover_image"`
@@ -109,10 +111,16 @@ func epubInfoInitTextHeadings(ei *epubInfo) (err error) {
 		return
 	}
 
+	// caser := cases.Title(language.English)
+
 	doc.Find("h1").Each(func(i int, s *goquery.Selection) {
-		ei.textHeadings = append(ei.textHeadings, s.Text())
+		// heading := caser.String(s.Text())
+		heading := s.Text()
+
+		ei.textHeadings = append(ei.textHeadings, heading)
 
 		s.SetAttr("id", "epub_generator_text_heading_"+strconv.Itoa(len(ei.textHeadings)))
+		// s.SetText(heading)
 	})
 
 	docString, err := doc.Find("body").Html()
