@@ -9,8 +9,8 @@ func xhtmlHeader(title, headContent string) string {
 	builder.WriteString(`<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">`)
 	builder.WriteString(`<head>`)
 	builder.WriteString(`<title>` + title + `</title>`)
-	builder.WriteString(`<link rel="stylesheet" href="styles.css" />`)
-	builder.WriteString(`<style>h1{page-break-before: always;}</style>`)
+	builder.WriteString(`<link rel="stylesheet" href="styles.css" type="text/css" />`)
+	builder.WriteString(`<style type="text/css">h1{page-break-before: always;}</style>`)
 
 	if headContent != "" {
 		builder.WriteString(headContent)
