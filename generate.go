@@ -401,6 +401,13 @@ func generateZipOCF(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 	builder.WriteString(`<dc:identifier id="unique-id">` + ei.ISBN + `</dc:identifier>`)
 	builder.WriteString(`</metadata>`)
 	builder.WriteString(`<manifest>`)
+
+	for i, f := range ei.Files {
+		path := "files/" + filepath.Base(f)
+
+		builder.WriteString(`<item id="file_` + strconv.Itoa(i) + `" href="` + path + `" media-type="application/octet-stream" />`)
+	}
+
 	builder.WriteString(`<item id="styles" href="styles.css" media-type="text/css" />`)
 
 	if ei.coverImage != nil {
