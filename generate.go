@@ -201,7 +201,7 @@ func generateZipCoverPage(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 	headerBuilder.WriteString(`body{text-align:center !important;padding:0pt !important;margin:0pt !important;}`)
 	headerBuilder.WriteString(`</style>`)
 
-	bodyBuilder.WriteString(`<div class="page" data-page="cover">`)
+	bodyBuilder.WriteString(`<div class="page cover_page">`)
 	bodyBuilder.WriteString(`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="100%" height="100%" viewBox="0 0 ` + coverImageWidthString + ` ` + coverImageHeightString + `" preserveAspectRatio="none">`)
 	bodyBuilder.WriteString(`<image width="` + coverImageWidthString + `" height="` + coverImageHeightString + `" xlink:href="cover.png" />`)
 	bodyBuilder.WriteString(`</svg>`)
@@ -230,7 +230,7 @@ func generateZipTitlePage(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 
 	var builder bytes.Buffer
 
-	builder.WriteString(`<div class="page" data-page="title">`)
+	builder.WriteString(`<div class="page title_page">`)
 	builder.WriteString(`<h1 class="title">` + ei.Title + "</h1>")
 
 	if ei.Author != "" {
@@ -266,7 +266,7 @@ func generateZipCopyrightPage(ei *epubInfo, archiveWriter *zip.Writer) (err erro
 
 	var builder bytes.Buffer
 
-	builder.WriteString(`<div class="page" data-page="copyright">`)
+	builder.WriteString(`<div class="page copyright_page">`)
 	builder.WriteString(`<p class="disclaimer">While every precaution has been taken in the preparation of this book, the publisher assumes no responsibility for errors or omissions, or for damages resulting from the use of the information contained herein.</p>`)
 	builder.WriteString(`<p class="notice">Copyright © ` + strconv.Itoa(time.Now().UTC().Year()))
 
@@ -316,7 +316,7 @@ func generateZipContentsPage(ei *epubInfo, archiveWriter *zip.Writer) (err error
 
 	var builder bytes.Buffer
 
-	builder.WriteString(`<div class="page" data-page="contents">`)
+	builder.WriteString(`<div class="page contents_page">`)
 	builder.WriteString(`<h1>Contents</h1>`)
 	builder.WriteString(`<ol>`)
 	builder.WriteString(`<li><a href="title.xhtml">Title</a></li>`)
@@ -361,7 +361,7 @@ func generateZipTextPage(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 
 	var bodyBuilder bytes.Buffer
 
-	bodyBuilder.WriteString(`<div class="page" data-page="text">`)
+	bodyBuilder.WriteString(`<div class="page text_page">`)
 	bodyBuilder.Write(ei.text)
 	bodyBuilder.WriteString(`</div>`)
 
