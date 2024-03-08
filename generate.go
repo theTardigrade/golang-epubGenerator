@@ -11,60 +11,67 @@ import (
 	"time"
 
 	"github.com/dustin/go-humanize"
-	"github.com/iancoleman/strcase"
 )
 
-type generateHandler func(*epubInfo, *zip.Writer) error
+type generateZipHandler func(*epubInfo, *zip.Writer) error
 
 var (
-	generateHandlerList = []generateHandler{
-		generateMimetype,
-		generateContainer,
-		generateStyles,
-		generateCoverImage,
-		generateCoverPage,
-		generateTitlePage,
-		generateCopyrightPage,
-		generateContentsPage,
-		generateTextPage,
-		generateOCF,
-		generateNCX,
+	generateZipHandlerList = []generateZipHandler{
+		generateZipMimetype,
+		generateZipContainer,
+		generateZipStyles,
+		generateZipCoverImage,
+		generateZipCoverPage,
+		generateZipTitlePage,
+		// generateZipBlankPage,
+		generateZipCopyrightPage,
+		generateZipContentsPage,
+		generateZipTextPage,
+		generateZipOCF,
+		generateZipNCX,
 	}
 )
 
 func generate(ei *epubInfo) (err error) {
-	outputTitle := strcase.ToSnake(ei.Title)
-
-	err = func() (err error) {
-		archiveFile, err := os.Create(outputTitle + ".zip")
-		if err != nil {
-			return
-		}
-		defer archiveFile.Close()
-
-		archiveWriter := zip.NewWriter(archiveFile)
-		defer archiveWriter.Close()
-
-		for _, handler := range generateHandlerList {
-			if err = handler(ei, archiveWriter); err != nil {
-				return
-			}
-		}
-
-		return
-	}()
-	if err != nil {
+	if err = generateZip(ei); err != nil {
 		return
 	}
 
-	if err = os.Rename(outputTitle+".zip", outputTitle+".epub"); err != nil {
+	if err = generateEpub(ei); err != nil {
 		return
 	}
 
 	return
 }
 
-func generateMimetype(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
+func generateZip(ei *epubInfo) (err error) {
+	archiveFile, err := os.Create(ei.outputTitle + ".zip")
+	if err != nil {
+		return
+	}
+	defer archiveFile.Close()
+
+	archiveWriter := zip.NewWriter(archiveFile)
+	defer archiveWriter.Close()
+
+	for _, handler := range generateZipHandlerList {
+		if err = handler(ei, archiveWriter); err != nil {
+			return
+		}
+	}
+
+	return
+}
+
+func generateEpub(ei *epubInfo) (err error) {
+	if err = os.Rename(ei.outputTitle+".zip", ei.outputTitle+".epub"); err != nil {
+		return
+	}
+
+	return
+}
+
+func generateZipMimetype(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 	w, err := archiveWriter.CreateHeader(&zip.FileHeader{
 		Name:   "mimetype",
 		Method: zip.Store,
@@ -80,7 +87,7 @@ func generateMimetype(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 	return
 }
 
-func generateContainer(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
+func generateZipContainer(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 	w, err := archiveWriter.Create("META-INF/container.xml")
 	if err != nil {
 		return
@@ -102,7 +109,7 @@ func generateContainer(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 	return
 }
 
-func generateStyles(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
+func generateZipStyles(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 	w, err := archiveWriter.Create("styles.css")
 	if err != nil {
 		return
@@ -129,7 +136,7 @@ func generateStyles(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 	return
 }
 
-func generateCoverImage(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
+func generateZipCoverImage(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 	if ei.coverImage == nil {
 		return
 	}
@@ -147,7 +154,7 @@ func generateCoverImage(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 	return
 }
 
-func generateCoverPage(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
+func generateZipCoverPage(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 	if ei.coverImage == nil {
 		return
 	}
@@ -188,7 +195,7 @@ func generateCoverPage(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 	return
 }
 
-func generateTitlePage(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
+func generateZipTitlePage(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 	w, err := archiveWriter.Create("title.xhtml")
 	if err != nil {
 		return
@@ -220,7 +227,7 @@ func generateTitlePage(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 	return
 }
 
-func generateCopyrightPage(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
+func generateZipCopyrightPage(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 	if !ei.IncludeCopyrightPage {
 		return
 	}
@@ -270,7 +277,7 @@ func generateCopyrightPage(ei *epubInfo, archiveWriter *zip.Writer) (err error) 
 	return
 }
 
-func generateContentsPage(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
+func generateZipContentsPage(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 	if !ei.IncludeContentsPage {
 		return
 	}
@@ -319,7 +326,7 @@ func generateContentsPage(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 	return
 }
 
-func generateTextPage(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
+func generateZipTextPage(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 	w, err := archiveWriter.Create("text.xhtml")
 	if err != nil {
 		return
@@ -346,7 +353,7 @@ func generateTextPage(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 	return
 }
 
-func generateOCF(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
+func generateZipOCF(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 	w, err := archiveWriter.Create("content.opf")
 	if err != nil {
 		return
@@ -421,7 +428,7 @@ func generateOCF(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 	return
 }
 
-func generateNCX(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
+func generateZipNCX(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 	w, err := archiveWriter.Create("toc.ncx")
 	if err != nil {
 		return

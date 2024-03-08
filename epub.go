@@ -12,6 +12,7 @@ import (
 	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/html"
 	"github.com/gomarkdown/markdown/parser"
+	"github.com/iancoleman/strcase"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 )
@@ -39,6 +40,7 @@ type epubInfo struct {
 	coverImageFormat string
 	text             []byte
 	textHeadings     []string
+	outputTitle      string
 }
 
 type epubInfoInitHandler = func(*epubInfo) error
@@ -48,6 +50,7 @@ var (
 		epubInfoInitCoverImage,
 		epubInfoInitText,
 		epubInfoInitTextHeadings,
+		epubInfoInitOutputTitle,
 	}
 )
 
@@ -163,6 +166,12 @@ func epubInfoInitTextHeadings(ei *epubInfo) (err error) {
 	}
 
 	ei.text = []byte(docString)
+
+	return
+}
+
+func epubInfoInitOutputTitle(ei *epubInfo) (err error) {
+	ei.outputTitle = strcase.ToSnake(ei.Title)
 
 	return
 }
