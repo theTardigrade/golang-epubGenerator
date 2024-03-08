@@ -23,13 +23,14 @@ const (
 )
 
 type epubInfo struct {
-	ISBN                         string `json:"isbn"`
-	Title                        string `json:"title"`
-	Author                       string `json:"author"`
-	EditionNumber                int    `json:"edition_number"`
-	IncludeContentsPage          bool   `json:"include_contents_page"`
-	IncludeCopyrightPage         bool   `json:"include_copyright_page"`
-	ShouldCapitalizeMainHeadings bool   `json:"should_capitalize_main_headings"`
+	ISBN                         string   `json:"isbn"`
+	Title                        string   `json:"title"`
+	Author                       string   `json:"author"`
+	EditionNumber                int      `json:"edition_number"`
+	Files                        []string `json:"files"`
+	IncludeContentsPage          bool     `json:"include_contents_page"`
+	IncludeCopyrightPage         bool     `json:"include_copyright_page"`
+	ShouldCapitalizeMainHeadings bool     `json:"should_capitalize_main_headings"`
 	Paths                        struct {
 		CoverImage string `json:"cover_image"`
 		Styles     string `json:"styles"`

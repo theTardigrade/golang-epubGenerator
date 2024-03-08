@@ -6,6 +6,7 @@ import (
 	"image/png"
 	"io"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -19,6 +20,7 @@ var (
 	generateZipHandlerList = []generateZipHandler{
 		generateZipMimetype,
 		generateZipContainer,
+		generateZipFiles,
 		generateZipStyles,
 		generateZipCoverImage,
 		generateZipCoverPage,
@@ -81,6 +83,32 @@ func generateZipMimetype(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 
 	if _, err = io.WriteString(w, "application/epub+zip"); err != nil {
 		return
+	}
+
+	return
+}
+
+func generateZipFiles(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
+	if len(ei.Files) == 0 {
+		return
+	}
+
+	for _, f := range ei.Files {
+		path := "files/" + filepath.Base(f)
+
+		w, err := archiveWriter.Create(path)
+		if err != nil {
+			return err
+		}
+
+		b, err := os.ReadFile(f)
+		if err != nil {
+			return err
+		}
+
+		if _, err = w.Write(b); err != nil {
+			return err
+		}
 	}
 
 	return
