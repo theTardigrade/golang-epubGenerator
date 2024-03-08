@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/dustin/go-humanize"
+	"github.com/iancoleman/strcase"
 )
 
 type generateHandler func(*epubInfo, *zip.Writer) error
@@ -32,8 +33,10 @@ var (
 )
 
 func generate(ei *epubInfo) (err error) {
+	outputTitle := strcase.ToSnake(ei.Title)
+
 	err = func() (err error) {
-		archiveFile, err := os.Create("output.zip")
+		archiveFile, err := os.Create(outputTitle + ".zip")
 		if err != nil {
 			return
 		}
@@ -54,7 +57,7 @@ func generate(ei *epubInfo) (err error) {
 		return
 	}
 
-	if err = os.Rename("output.zip", "output.epub"); err != nil {
+	if err = os.Rename(outputTitle+".zip", outputTitle+".epub"); err != nil {
 		return
 	}
 

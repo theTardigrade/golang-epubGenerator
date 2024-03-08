@@ -2,8 +2,10 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"image"
 	"os"
+	"path/filepath"
 	"strconv"
 
 	"github.com/PuerkitoBio/goquery"
@@ -87,14 +89,33 @@ func epubInfoInitText(ei *epubInfo) (err error) {
 		panic(err)
 	}
 
-	p := parser.New()
+	switch filepath.Ext(ei.Paths.Text) {
+	case ".md":
+		p := parser.New()
 
-	document := p.Parse(b)
-	renderer := html.NewRenderer(html.RendererOptions{
-		Flags: html.CommonFlags,
-	})
+		document := p.Parse(b)
+		renderer := html.NewRenderer(html.RendererOptions{
+			Flags: html.CommonFlags,
+		})
 
-	b = markdown.Render(document, renderer)
+		b = markdown.Render(document, renderer)
+	case ".html", ".xhtml":
+		r := bytes.NewReader(ei.text)
+
+		doc, err := goquery.NewDocumentFromReader(r)
+		if err != nil {
+			return err
+		}
+
+		docString, err := doc.Find("body").Html()
+		if err != nil {
+			return err
+		}
+
+		ei.text = []byte(docString)
+	default:
+		return errors.New("unrecognized text file extension")
+	}
 
 	b, err = minifier.Bytes("text/xml", b)
 	if err != nil {
