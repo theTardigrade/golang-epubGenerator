@@ -37,26 +37,28 @@ type epubInfo struct {
 		Text       string `json:"text"`
 	} `json:"paths"`
 
-	coverImage       image.Image
-	coverImageFormat string
-	text             []byte
-	textHeadings     []string
-	outputTitle      string
+	output struct {
+		coverImage       image.Image
+		coverImageFormat string
+		text             []byte
+		textHeadings     []string
+		title            string
+	}
 }
 
-type epubInfoInitHandler = func(*epubInfo) error
+type epubInfoOutputInitHandler = func(*epubInfo) error
 
 var (
-	epubInfoInitHandlerList = []epubInfoInitHandler{
-		epubInfoInitCoverImage,
-		epubInfoInitText,
-		epubInfoInitTextHeadings,
-		epubInfoInitOutputTitle,
+	epubInfoOutputInitHandlerList = []epubInfoOutputInitHandler{
+		epubInfoOutputInitCoverImage,
+		epubInfoOutputInitText,
+		epubInfoOutputInitTextHeadings,
+		epubInfoOutputInitOutputTitle,
 	}
 )
 
-func epubInfoInit(ei *epubInfo) (err error) {
-	for _, handler := range epubInfoInitHandlerList {
+func epubInfoOutputInit(ei *epubInfo) (err error) {
+	for _, handler := range epubInfoOutputInitHandlerList {
 		if err = handler(ei); err != nil {
 			return
 		}
@@ -65,7 +67,7 @@ func epubInfoInit(ei *epubInfo) (err error) {
 	return
 }
 
-func epubInfoInitCoverImage(ei *epubInfo) (err error) {
+func epubInfoOutputInitCoverImage(ei *epubInfo) (err error) {
 	if ei.Paths.CoverImage == "" {
 		return
 	}
@@ -81,13 +83,13 @@ func epubInfoInitCoverImage(ei *epubInfo) (err error) {
 		return
 	}
 
-	ei.coverImage = image
-	ei.coverImageFormat = imageFormat
+	ei.output.coverImage = image
+	ei.output.coverImageFormat = imageFormat
 
 	return
 }
 
-func epubInfoInitText(ei *epubInfo) (err error) {
+func epubInfoOutputInitText(ei *epubInfo) (err error) {
 	b, err := os.ReadFile(ei.Paths.Text)
 	if err != nil {
 		panic(err)
@@ -104,7 +106,7 @@ func epubInfoInitText(ei *epubInfo) (err error) {
 
 		b = markdown.Render(document, renderer)
 	case ".html", ".xhtml":
-		r := bytes.NewReader(ei.text)
+		r := bytes.NewReader(b)
 
 		doc, err := goquery.NewDocumentFromReader(r)
 		if err != nil {
@@ -116,7 +118,7 @@ func epubInfoInitText(ei *epubInfo) (err error) {
 			return err
 		}
 
-		ei.text = []byte(docString)
+		ei.output.text = []byte(docString)
 	default:
 		return errors.New("unrecognized text file extension")
 	}
@@ -126,13 +128,13 @@ func epubInfoInitText(ei *epubInfo) (err error) {
 		return
 	}
 
-	ei.text = b
+	ei.output.text = b
 
 	return
 }
 
-func epubInfoInitTextHeadings(ei *epubInfo) (err error) {
-	r := bytes.NewReader(ei.text)
+func epubInfoOutputInitTextHeadings(ei *epubInfo) (err error) {
+	r := bytes.NewReader(ei.output.text)
 
 	doc, err := goquery.NewDocumentFromReader(r)
 	if err != nil {
@@ -152,9 +154,9 @@ func epubInfoInitTextHeadings(ei *epubInfo) (err error) {
 			heading = caser.String(heading)
 		}
 
-		ei.textHeadings = append(ei.textHeadings, heading)
+		ei.output.textHeadings = append(ei.output.textHeadings, heading)
 
-		s.SetAttr("id", "epub_generator_text_heading_"+strconv.Itoa(len(ei.textHeadings)))
+		s.SetAttr("id", "epub_generator_text_heading_"+strconv.Itoa(len(ei.output.textHeadings)))
 
 		if ei.ShouldCapitalizeMainHeadings {
 			s.SetText(heading)
@@ -166,13 +168,13 @@ func epubInfoInitTextHeadings(ei *epubInfo) (err error) {
 		return
 	}
 
-	ei.text = []byte(docString)
+	ei.output.text = []byte(docString)
 
 	return
 }
 
-func epubInfoInitOutputTitle(ei *epubInfo) (err error) {
-	ei.outputTitle = strcase.ToSnake(ei.Title)
+func epubInfoOutputInitOutputTitle(ei *epubInfo) (err error) {
+	ei.output.title = strcase.ToSnake(ei.Title)
 
 	return
 }

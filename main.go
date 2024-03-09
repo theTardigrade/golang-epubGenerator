@@ -18,7 +18,7 @@ func main() {
 		panic(err)
 	}
 
-	if err = epubInfoInit(&ei); err != nil {
+	if err = epubInfoOutputInit(&ei); err != nil {
 		panic(err)
 	}
 

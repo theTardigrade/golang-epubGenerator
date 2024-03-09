@@ -46,7 +46,7 @@ func generate(ei *epubInfo) (err error) {
 }
 
 func generateZip(ei *epubInfo) (err error) {
-	archiveFile, err := os.Create(ei.outputTitle + ".zip")
+	archiveFile, err := os.Create(ei.output.title + ".zip")
 	if err != nil {
 		return
 	}
@@ -65,7 +65,7 @@ func generateZip(ei *epubInfo) (err error) {
 }
 
 func generateEpub(ei *epubInfo) (err error) {
-	if err = os.Rename(ei.outputTitle+".zip", ei.outputTitle+".epub"); err != nil {
+	if err = os.Rename(ei.output.title+".zip", ei.output.title+".epub"); err != nil {
 		return
 	}
 
@@ -164,7 +164,7 @@ func generateZipStyles(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 }
 
 func generateZipCoverImage(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
-	if ei.coverImage == nil {
+	if ei.output.coverImage == nil {
 		return
 	}
 
@@ -173,7 +173,7 @@ func generateZipCoverImage(ei *epubInfo, archiveWriter *zip.Writer) (err error) 
 		return
 	}
 
-	err = png.Encode(w, ei.coverImage)
+	err = png.Encode(w, ei.output.coverImage)
 	if err != nil {
 		return
 	}
@@ -182,7 +182,7 @@ func generateZipCoverImage(ei *epubInfo, archiveWriter *zip.Writer) (err error) 
 }
 
 func generateZipCoverPage(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
-	if ei.coverImage == nil {
+	if ei.output.coverImage == nil {
 		return
 	}
 
@@ -192,7 +192,7 @@ func generateZipCoverPage(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 	}
 
 	var headerBuilder, bodyBuilder bytes.Buffer
-	coverImageBounds := ei.coverImage.Bounds()
+	coverImageBounds := ei.output.coverImage.Bounds()
 	coverImageWidthString := strconv.Itoa(coverImageBounds.Dx())
 	coverImageHeightString := strconv.Itoa(coverImageBounds.Dy())
 
@@ -325,8 +325,8 @@ func generateZipContentsPage(ei *epubInfo, archiveWriter *zip.Writer) (err error
 		builder.WriteString(`<li><a href="copyright.xhtml">Copyright</a></li>`)
 	}
 
-	if len(ei.textHeadings) > 0 {
-		for i, heading := range ei.textHeadings {
+	if len(ei.output.textHeadings) > 0 {
+		for i, heading := range ei.output.textHeadings {
 			id := "epub_generator_text_heading_" + strconv.Itoa(i+1)
 
 			builder.WriteString(`<li><a href="text.xhtml#` + id + `">` + heading + `</a></li>`)
@@ -362,7 +362,7 @@ func generateZipTextPage(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 	var bodyBuilder bytes.Buffer
 
 	bodyBuilder.WriteString(`<div class="page text_page">`)
-	bodyBuilder.Write(ei.text)
+	bodyBuilder.Write(ei.output.text)
 	bodyBuilder.WriteString(`</div>`)
 
 	if _, err = io.WriteString(w, xhtmlHeader("Text", "")); err != nil {
@@ -410,7 +410,7 @@ func generateZipOCF(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 
 	builder.WriteString(`<item id="styles" href="styles.css" media-type="text/css" />`)
 
-	if ei.coverImage != nil {
+	if ei.output.coverImage != nil {
 		builder.WriteString(`<item id="cover_image" href="cover.png" media-type="image/png" />`)
 		builder.WriteString(`<item id="cover_page" href="cover.xhtml" media-type="application/xhtml+xml" />`)
 	}
@@ -430,7 +430,7 @@ func generateZipOCF(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 	builder.WriteString(`</manifest>`)
 	builder.WriteString(`<spine toc="ncx">`)
 
-	if ei.coverImage != nil {
+	if ei.output.coverImage != nil {
 		builder.WriteString(`<itemref idref="cover_page" />`)
 	}
 
@@ -447,7 +447,7 @@ func generateZipOCF(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 	builder.WriteString(`<itemref idref="text_page" />`)
 	builder.WriteString(`</spine>`)
 
-	if ei.coverImage != nil {
+	if ei.output.coverImage != nil {
 		builder.WriteString(`<guide>`)
 		builder.WriteString(`<reference type="cover_page" href="cover.xhtml" title="Cover" />`)
 		builder.WriteString(`</guide>`)
@@ -483,7 +483,7 @@ func generateZipNCX(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 	contentBuilder.WriteString(`</docTitle>`)
 	contentBuilder.WriteString(`<navMap>`)
 
-	if ei.coverImage != nil {
+	if ei.output.coverImage != nil {
 		playOrder++
 		contentBuilder.WriteString(`<navPoint id="cover_page" playOrder="` + strconv.Itoa(playOrder) + `">`)
 		contentBuilder.WriteString(`<navLabel>`)
@@ -521,8 +521,8 @@ func generateZipNCX(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 		contentBuilder.WriteString(`</navPoint>`)
 	}
 
-	if len(ei.textHeadings) > 0 {
-		for i, heading := range ei.textHeadings {
+	if len(ei.output.textHeadings) > 0 {
+		for i, heading := range ei.output.textHeadings {
 			id := "epub_generator_text_heading_" + strconv.Itoa(i+1)
 
 			playOrder++
