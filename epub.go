@@ -23,15 +23,15 @@ const (
 )
 
 type epubInfo struct {
-	ISBN                         string   `json:"isbn"`
-	Title                        string   `json:"title"`
-	Author                       string   `json:"author"`
-	EditionNumber                int      `json:"edition_number"`
-	Files                        []string `json:"files"`
-	IncludeContentsPage          bool     `json:"include_contents_page"`
-	IncludeCopyrightPage         bool     `json:"include_copyright_page"`
-	ShouldCapitalizeMainHeadings bool     `json:"should_capitalize_main_headings"`
-	Paths                        struct {
+	ISBN                     string   `json:"isbn"`
+	Title                    string   `json:"title"`
+	Author                   string   `json:"author"`
+	EditionNumber            int      `json:"edition_number"`
+	Files                    []string `json:"files"`
+	IncludeContentsPage      bool     `json:"include_contents_page"`
+	IncludeCopyrightPage     bool     `json:"include_copyright_page"`
+	ShouldCapitalizeHeadings bool     `json:"should_capitalize_headings"`
+	Paths                    struct {
 		CoverImage string `json:"cover_image"`
 		Styles     string `json:"styles"`
 		Text       string `json:"text"`
@@ -143,22 +143,24 @@ func epubInfoOutputInitTextHeadings(ei *epubInfo) (err error) {
 
 	var caser cases.Caser
 
-	if ei.ShouldCapitalizeMainHeadings {
+	if ei.ShouldCapitalizeHeadings {
 		caser = cases.Title(language.English)
 	}
 
-	doc.Find("h1").Each(func(i int, s *goquery.Selection) {
+	doc.Find("h1,h2,h3,h4,h5,h6").Each(func(i int, s *goquery.Selection) {
 		heading := s.Text()
 
-		if ei.ShouldCapitalizeMainHeadings {
+		if ei.ShouldCapitalizeHeadings {
 			heading = caser.String(heading)
 		}
 
-		ei.output.textHeadings = append(ei.output.textHeadings, heading)
+		if s.Is("h1") {
+			ei.output.textHeadings = append(ei.output.textHeadings, heading)
 
-		s.SetAttr("id", "epub_generator_text_heading_"+strconv.Itoa(len(ei.output.textHeadings)))
+			s.SetAttr("id", "epub_generator_text_heading_"+strconv.Itoa(len(ei.output.textHeadings)))
+		}
 
-		if ei.ShouldCapitalizeMainHeadings {
+		if ei.ShouldCapitalizeHeadings {
 			s.SetText(heading)
 		}
 	})
