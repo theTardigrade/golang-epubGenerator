@@ -42,7 +42,7 @@ type epubInfo struct {
 		coverImageFormat string
 		text             []byte
 		textHeadings     []string
-		title            string
+		titleSnaked      string
 	}
 }
 
@@ -174,7 +174,7 @@ func epubInfoOutputInitTextHeadings(ei *epubInfo) (err error) {
 }
 
 func epubInfoOutputInitOutputTitle(ei *epubInfo) (err error) {
-	ei.output.title = strcase.ToSnake(ei.Title)
+	ei.output.titleSnaked = strcase.ToSnake(ei.Title)
 
 	return
 }

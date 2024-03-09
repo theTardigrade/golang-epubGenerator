@@ -46,7 +46,7 @@ func generate(ei *epubInfo) (err error) {
 }
 
 func generateZip(ei *epubInfo) (err error) {
-	archiveFile, err := os.Create(ei.output.title + ".zip")
+	archiveFile, err := os.Create(ei.output.titleSnaked + ".zip")
 	if err != nil {
 		return
 	}
@@ -65,7 +65,7 @@ func generateZip(ei *epubInfo) (err error) {
 }
 
 func generateEpub(ei *epubInfo) (err error) {
-	if err = os.Rename(ei.output.title+".zip", ei.output.title+".epub"); err != nil {
+	if err = os.Rename(ei.output.titleSnaked+".zip", ei.output.titleSnaked+".epub"); err != nil {
 		return
 	}
 
