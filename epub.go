@@ -152,16 +152,14 @@ func epubInfoOutputInitTextHeadings(ei *epubInfo) (err error) {
 
 		if ei.ShouldCapitalizeHeadings {
 			heading = caser.String(heading)
+
+			s.SetText(heading)
 		}
 
 		if s.Is("h1") {
 			ei.output.textHeadings = append(ei.output.textHeadings, heading)
 
 			s.SetAttr("id", "epub_generator_text_heading_"+strconv.Itoa(len(ei.output.textHeadings)))
-		}
-
-		if ei.ShouldCapitalizeHeadings {
-			s.SetText(heading)
 		}
 	})
 
