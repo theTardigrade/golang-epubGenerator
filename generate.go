@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"image/png"
 	"io"
+	"mime"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -404,8 +405,13 @@ func generateZipOCF(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 
 	for i, f := range ei.Files {
 		path := "files/" + filepath.Base(f)
+		mediaType := mime.TypeByExtension(filepath.Ext(path))
 
-		builder.WriteString(`<item id="file_` + strconv.Itoa(i) + `" href="` + path + `" media-type="application/octet-stream" />`)
+		if mediaType == "" {
+			mediaType = "application/octet-stream"
+		}
+
+		builder.WriteString(`<item id="file_` + strconv.Itoa(i) + `" href="` + path + `" media-type="` + mediaType + `" />`)
 	}
 
 	builder.WriteString(`<item id="styles" href="styles.css" media-type="text/css" />`)
