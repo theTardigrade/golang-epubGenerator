@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"image"
+	"mime"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -13,6 +14,7 @@ import (
 	"github.com/gomarkdown/markdown/html"
 	"github.com/gomarkdown/markdown/parser"
 	"github.com/iancoleman/strcase"
+	hash "github.com/theTardigrade/golang-hash"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 )
@@ -43,7 +45,16 @@ type epubInfo struct {
 		text             []byte
 		textHeadings     []string
 		titleSnaked      string
+		fileData         []*epubInfoOutputFileDatum
 	}
+}
+
+type epubInfoOutputFileDatum struct {
+	hash     string
+	path     string
+	ext      string
+	mimeType string
+	content  []byte
 }
 
 type epubInfoOutputInitHandler = func(*epubInfo) error
@@ -54,6 +65,7 @@ var (
 		epubInfoOutputInitText,
 		epubInfoOutputInitTextHeadings,
 		epubInfoOutputInitOutputTitle,
+		epubInfoOutputInitFiles,
 	}
 )
 
@@ -175,6 +187,57 @@ func epubInfoOutputInitTextHeadings(ei *epubInfo) (err error) {
 
 func epubInfoOutputInitOutputTitle(ei *epubInfo) (err error) {
 	ei.output.titleSnaked = strcase.ToSnake(ei.Title)
+
+	return
+}
+
+func epubInfoOutputInitFiles(ei *epubInfo) (err error) {
+	for _, f := range ei.Files {
+		if _, err = ei.findFileDatum(f); err != nil {
+			return
+		}
+	}
+
+	return
+}
+
+func (ei *epubInfo) findFileDatum(path string) (datum *epubInfoOutputFileDatum, err error) {
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return
+	}
+
+	ext := filepath.Ext(path)
+	hash := hash.Uint256(b).Text(62)
+
+	var foundDatum bool
+
+	for _, datum = range ei.output.fileData {
+		if datum.hash == hash && datum.ext == ext {
+			foundDatum = true
+			break
+		}
+	}
+
+	if foundDatum {
+		return
+	}
+
+	mimeType := mime.TypeByExtension(filepath.Ext(path))
+
+	if mimeType == "" {
+		mimeType = "application/octet-stream"
+	}
+
+	datum = &epubInfoOutputFileDatum{
+		hash:     hash,
+		path:     "files/" + hash + ext,
+		ext:      ext,
+		mimeType: mimeType,
+		content:  b,
+	}
+
+	ei.output.fileData = append(ei.output.fileData, datum)
 
 	return
 }

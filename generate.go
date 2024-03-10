@@ -5,9 +5,7 @@ import (
 	"bytes"
 	"image/png"
 	"io"
-	"mime"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -94,20 +92,13 @@ func generateZipFiles(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 		return
 	}
 
-	for _, f := range ei.Files {
-		path := "files/" + filepath.Base(f)
-
-		w, err := archiveWriter.Create(path)
+	for _, datum := range ei.output.fileData {
+		w, err := archiveWriter.Create(datum.path)
 		if err != nil {
 			return err
 		}
 
-		b, err := os.ReadFile(f)
-		if err != nil {
-			return err
-		}
-
-		if _, err = w.Write(b); err != nil {
+		if _, err = w.Write(datum.content); err != nil {
 			return err
 		}
 	}
@@ -403,15 +394,8 @@ func generateZipOCF(ei *epubInfo, archiveWriter *zip.Writer) (err error) {
 	builder.WriteString(`</metadata>`)
 	builder.WriteString(`<manifest>`)
 
-	for i, f := range ei.Files {
-		path := "files/" + filepath.Base(f)
-		mediaType := mime.TypeByExtension(filepath.Ext(path))
-
-		if mediaType == "" {
-			mediaType = "application/octet-stream"
-		}
-
-		builder.WriteString(`<item id="file_` + strconv.Itoa(i) + `" href="` + path + `" media-type="` + mediaType + `" />`)
+	for i, datum := range ei.output.fileData {
+		builder.WriteString(`<item id="file_` + strconv.Itoa(i) + `" href="` + datum.path + `" media-type="` + datum.mimeType + `" />`)
 	}
 
 	builder.WriteString(`<item id="styles" href="styles.css" media-type="text/css" />`)

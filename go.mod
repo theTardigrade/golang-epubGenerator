@@ -8,6 +8,7 @@ require (
 	github.com/gomarkdown/markdown v0.0.0-20231222211730-1d6d20845b47
 	github.com/iancoleman/strcase v0.3.0
 	github.com/tdewolff/minify v2.3.6+incompatible
+	github.com/theTardigrade/golang-hash v1.4.3
 	golang.org/x/text v0.14.0
 )
 

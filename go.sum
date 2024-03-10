@@ -14,6 +14,8 @@ github.com/tdewolff/parse v2.3.4+incompatible h1:x05/cnGwIMf4ceLuDMBOdQ1qGniMoxp
 github.com/tdewolff/parse v2.3.4+incompatible/go.mod h1:8oBwCsVmUkgHO8M5iCzSIDtpzXOT0WXX9cWhz+bIzJQ=
 github.com/tdewolff/test v1.0.10 h1:uWiheaLgLcNFqHcdWveum7PQfMnIUTf9Kl3bFxrIoew=
 github.com/tdewolff/test v1.0.10/go.mod h1:6DAvZliBAAnD7rhVgwaM7DE5/d9NMOAJ09SqYqeK4QE=
+github.com/theTardigrade/golang-hash v1.4.3 h1:kpvNTJPdJGjf9KwfdOmUVMR5iz7WKDrdm7eXWAkdEa4=
+github.com/theTardigrade/golang-hash v1.4.3/go.mod h1:/H6EhVuFbQdVSmBiFrGDI7uyOE6u5nFv9MiOTZGM8io=
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/crypto v0.0.0-20210921155107-089bfa567519/go.mod h1:GvvjBRRGRdwPK5ydBHafDWAxML/pGHZbMvKqRZ5+Abc=
