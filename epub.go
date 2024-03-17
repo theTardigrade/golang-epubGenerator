@@ -7,6 +7,7 @@ import (
 	"mime"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 
 	"github.com/PuerkitoBio/goquery"
@@ -42,6 +43,7 @@ type epubInfo struct {
 	output struct {
 		coverImage       image.Image
 		coverImageFormat string
+		styles           []byte
 		text             []byte
 		textHeadings     []string
 		titleSnaked      string
@@ -65,6 +67,7 @@ var (
 		epubInfoOutputInitText,
 		epubInfoOutputInitTextHeadings,
 		epubInfoOutputInitOutputTitle,
+		epubInfoOutputInitStyles,
 		epubInfoOutputInitFiles,
 	}
 )
@@ -175,6 +178,25 @@ func epubInfoOutputInitTextHeadings(ei *epubInfo) (err error) {
 		}
 	})
 
+	doc.Find("img").Each(func(i int, s *goquery.Selection) {
+		src, srcExists := s.Attr("src")
+		if !srcExists {
+			return
+		}
+
+		var datum *epubInfoOutputFileDatum
+
+		datum, err = ei.findFileDatum(src)
+		if err != nil {
+			return
+		}
+
+		s.SetAttr("src", datum.path)
+	})
+	if err != nil {
+		return
+	}
+
 	docString, err := doc.Find("body").Html()
 	if err != nil {
 		return
@@ -187,6 +209,45 @@ func epubInfoOutputInitTextHeadings(ei *epubInfo) (err error) {
 
 func epubInfoOutputInitOutputTitle(ei *epubInfo) (err error) {
 	ei.output.titleSnaked = strcase.ToSnake(ei.Title)
+
+	return
+}
+
+var (
+	epubInfoOutputInitStylesUrlRegexp = regexp.MustCompile(`url\((["'])(\S*)["']\)`)
+)
+
+func epubInfoOutputInitStyles(ei *epubInfo) (err error) {
+	var b []byte
+
+	b, err = os.ReadFile(ei.Paths.Styles)
+	if err != nil {
+		return
+	}
+
+	epubInfoOutputInitStylesUrlRegexp.ReplaceAllFunc(b, func(b2 []byte) []byte {
+		submatches := epubInfoOutputInitStylesUrlRegexp.FindSubmatch(b2)
+		path := string(submatches[2])
+
+		var datum *epubInfoOutputFileDatum
+
+		datum, err = ei.findFileDatum(path)
+		if err != nil {
+			return b2
+		}
+
+		return []byte(`url("` + datum.path + `")`)
+	})
+	if err != nil {
+		return
+	}
+
+	b, err = minifier.Bytes("text/css", b)
+	if err != nil {
+		return
+	}
+
+	ei.output.styles = b
 
 	return
 }
